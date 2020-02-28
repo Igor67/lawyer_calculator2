@@ -13,6 +13,19 @@ getUnique = function (arr) {
     return unique;
 };
 
+function parsezero(day, month) {
+    if(parseInt(day) < 10){
+        day = '0'+day;
+    }
+    if(parseInt(month) < 10){
+        month = '0'+month;
+    }
+    return {
+        day: day,
+        month: month
+    };
+}
+
 function clearTable() {
     let element1 = document.getElementById('my-table');
     let element2 = document.getElementById('my-table2');
@@ -36,7 +49,6 @@ var table2 = {};
 
 function totalCalculate(ansFineSumm, threepersum, totalSum, colKt) {
     let total = (parseFloat(ansFineSumm) + parseFloat(threepersum * 100) + parseFloat(totalSum * colKt)).toFixed(2);
-    ////////////////////////////////////////////console.log('penya: ' + ansFineSumm + ' 3per: ' + threepersum * 100 + ' inflation: ' + totalSum * colKt);
     return total;
 }
 
@@ -72,23 +84,19 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         let currArray = table[keys[i]];
         let currstr = keys[i];
         currstr = currstr.split('-')
-        //////////////////////////////console.log(currstr[0]);
+        /////////////////////////////
         let cDate = new Date(currstr[0]);
         let currarray2 = currstr[0];
         currarray2 = currarray2.split(',');
-        //////////////////////////////console.log(cDate);
+        /////////////////////////////
         let month = currarray2[1];
-        //////////////////////////////console.log('date: ' + cDate.getDay());
         let day = currarray2[0];
-        //////////////////////////////console.log('day: ' + day)
         // if(i == 0){
-        //     day = cDate.getDay()+4;
+        //     day = cDate.getDate();
         // }
 
         let year = currarray2[2];
-        //////////////////////////////console.log('day: ' + day + ' month: ' + month + ' year: ' + year);
         let str = day + '.' + month + '.' + year;
-        ////////////////////////////////console.log('date: ' + cDate + ' str: ' + str);
         let doc = currArray[0];
         let colKt = currArray[1];
         let colDt = currArray[2];
@@ -135,7 +143,6 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
                 "    <th>iндекс</th>\n" +
                 "   </tr>";
         }
-        ////////////////////console.log('t: ' + allIndexest[i] + ' v: ' + allIndexes[i])
         table3t += "<tr>\n" +
             "    <th>" + allIndexest[i] + "</th>\n" +
             "    <th>" + allIndexes[i] + "</th>\n" +
@@ -154,6 +161,12 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
     let countf = 0;
     var totalI = 0.0;
     for (let i = 0; i < keys.length; i++) {
+        let enddate = new Date(date3.getFullYear(), date3.getMonth(), date3.getDate());
+        console.log(enddate);
+        if(enddate.getDate() < 15){
+            enddate.setMonth(enddate.getMonth()-1);
+        }
+        //console.log(enddate);
         if (i == 0) {
             newTable2T = "<table>" +
                 "<tr>\n" +
@@ -176,17 +189,21 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         totalsum -= parseInt(msum);
         let currstr = keys[i];
         currstr = currstr.split('-');
+        currstr = currstr[0].split('.');
         let date1 = new Date(currstr[0]);
-        let date2 = new Date(date3);
+        let date2 = new Date(enddate.getFullYear(), enddate.getMonth(), enddate.getDate());
+        console.log(date2);
+        console.log('////////////')
         let nextstr = keys[i + 1];
+
         if (i + 1 < keys.length) {
 
             nextstr = nextstr.split('-')
             date2 = new Date(nextstr[0]);
         } else {
-            nextstr = date3.getDay() + 1 + '.' + (date3.getMonth() + 1) + '.' + date3.getFullYear();
-            //////////////////////////////console.log('nextstrdsfsdf: ' + nextstr)
+            nextstr = enddate.getDate() + '.' + (enddate.getMonth() ) + '.' + enddate.getFullYear();
         }
+
         let currstr2 = currstr[0];
         currstr2 = currstr2.split(',');
         let nextstr2 = nextstr[0];
@@ -197,15 +214,19 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
             nextstr2 = nextstr2.split(',');
         }
 
-        //////////////////////////////console.log(currstr2 + ' next ' + nextstr2)
-        let cmonth = currstr2[1];
+        let cmonth = currstr2[0];
         let cyear = currstr2[2];
-        let cday = currstr2[0];
-        let nmonth = nextstr2[1];
+        let cday = currstr2[1];
+
+        let nmonth = nextstr2[0];
         let nyear = nextstr2[2];
-        let nday = nextstr2[0];
-        //////////////////////////////console.log('cday: ' + cday + ' cmonth: ' + cmonth + ' year: ' + cyear);
-        //////////////////////////////console.log('nday: ' + nday + ' nmonth: ' + nmonth + ' nyear: ' + nyear);
+        let nday = nextstr2[1];
+
+        if(i+1 >= keys.length){
+            nmonth = parseInt(nextstr2[1]) +1;
+             nyear = nextstr2[2];
+             nday = nextstr2[0];
+        }
         let diff = findDifferenceM(date1, date2);
         let infla = drawInflation(date1, diff).array;
         totalIndex = findTotalIndex(infla);
@@ -242,39 +263,195 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
     doc.autoTable({html: '#my-table2', styles: {cellPadding: 0.5, font: "NotoSansCJKjp-Regular"},});
 
 
-    let penyaTable = document.createElement('table');
-    let penyatableText = "";
-    let penyaTable2 = document.createElement('table');
-    let penya2text = "";
-    let tvasya = 0.0;
-    var ns = 0;
+    let penyaTable2 = document.createElement('table'),
+        penya2text = "",
+        summPenya = 0.0,
+        penyaterm = parseInt(document.getElementById('deadline-stop').value), // nachisleniye peni srok v mesacah
+        actionslimit = parseInt(document.getElementById('deadline').value), // iscovqyavdavnost dla peni v godah
+        enddate = document.getElementById('finishDate').value;
+
+    enddate = enddate.split('.');
+    enddate = new Date(parseInt(enddate[2]), parseInt(enddate[1]) - 1, parseInt(enddate[0])); //data podachi iska
+
 
     for (let g = 0; g < keys.length; g++) {
-        let cc = 0;
-        let needstr = '';
-        let nextstr = '';
-        let penyato = 0;
-        let dateo = new Date();
-        let daten = new Date();
-        let flag1 = false;
-        let needvar = ns + 1;
-        let last = '2050,10,10';
-        let lastD = new Date(last);
-        let totals2 = keys[g].split('-');
-        totals2 = totals2[0].split(',');
-        console.log('year: '+parseInt(totals2[2]));
-        let year = parseInt(totals2[2]);
-        let totalD = new Date(parseInt(totals2[2]), parseInt(totals2[1]) + stop, parseInt(totals2[0])+29);
-        if(parseInt(totals2[0]) > 1){
-            totalD = '';
-            totalD = new Date(year, parseInt(totals2[1]) + stop+1, parseInt(totals2[0]));
-            console.log('here: '+ totalD.getFullYear() + ' date: '+year)
-        }
-        console.log('dateyear: '+ totalD.getFullYear())
-        //пеня
-        //TODO: пеня
+        let currArray = keys[g];
+        let needDate = '';
+        let dateforpenya = new Date(1917, 5, 5); //data okonchania nachisleniya peni
+        let penyaperiod = 0.0;
+        let datepenyastart = new Date(enddate.getFullYear(), enddate.getMonth(), enddate.getDate()); //data nacala peni
+        datepenyastart.setFullYear(datepenyastart.getFullYear() - actionslimit);
+        if (currArray[1]) {
+            needDate = keys[g].split('-');
+            needDate = needDate[0].split(',');
 
-        // for (let i = 0; i < keys2.length ; i++) {
+            dateforpenya = new Date(parseInt(needDate[2]), parseInt(needDate[0]) - 1, parseInt(needDate[1]));
+        }
+
+        if(datepenyastart < dateforpenya){
+            datepenyastart = new Date((dateforpenya.getFullYear()), (dateforpenya.getMonth()), (dateforpenya.getDate()));
+        }
+        dateforpenya.setMonth(dateforpenya.getMonth() + penyaterm);
+        if (dateforpenya >= enddate) {
+            dateforpenya = enddate;
+        }
+        if (datepenyastart <= dateforpenya) {
+            let penyaobj = {};
+
+            let diff = findDaysLag(dateforpenya, datepenyastart);
+
+            let date = datepenyastart.getDate();
+            let month = datepenyastart.getMonth();
+            let year = datepenyastart.getFullYear();
+
+
+
+
+            let values = [];
+            let dates = [];
+            values = findPenalty(diff, year, month, date).percent;
+            dates = findPenalty(diff, year, month, date).date;
+
+            for (let i = 0; i < values.length; i++) {
+                penyaobj[dates[i]] = values[i];
+            }
+            let penyakeys = Object.keys(penyaobj);
+            let fixedSumm = 0;
+            let preDate = new Date();
+            let tpenya = 0.0;
+            for (let i = 0; i < penyakeys.length; i++) {
+                let currArray = table[keys[g]];
+                let summ = parseInt(currArray[1]) - parseInt(currArray[2]) - fixedSumm;
+                //console.log('g: '+ g + ' i: '+i+ ' summ: '+summ + ' currArray[1]: '+currArray[1] + ' currArray[2]: '+currArray[2] + ' fsum: ' + fixedSumm + '\n' + '///////////////////');
+                if (summ <= 0) {
+                    break;
+                }
+                if (i == 0) {
+                    penya2text += "<table>" +
+                        "<tr>\n" +
+                        "    <th>Дата початку</th>\n" +
+                        "    <th>кiнцева дата</th>\n" +
+                        "    <th>кiлькiсть днiв</th>\n" +
+                        "    <th>сума боргу</th>\n" +
+                        "    <th>облiкова ставка НБУ</th>\n" +
+                        "    <th>розрахункова ставка</th>\n" +
+                        "    <th>пеня</th>\n" +
+                        "   </tr>";
+                }
+
+                let currstr = penyakeys[i];
+
+                let nextstr = penyakeys[i + 1];
+                if (nextstr == undefined) {
+                    let day1 = dateforpenya.getDate(),
+                        month1 = dateforpenya.getMonth() + 1,
+                        year1 = dateforpenya.getFullYear();
+                    nextstr = day1 + '.' + month1 + '.' + year1;
+                }
+                if (i == 0) {
+                    let day1 = datepenyastart.getDate(),
+                        month1 = datepenyastart.getMonth() + 1,
+                        year1 = datepenyastart.getFullYear();
+                    currstr = day1 + '.' + month1 + '.' + year1;
+
+                }
+                currstr = currstr.split('.');
+                nextstr = nextstr.split('.');
+                let currDate = new Date(parseInt(currstr[2]), parseInt(currstr[1]) - 1, parseInt(currstr[0]) + 1);
+                let nextDate = new Date(parseInt(nextstr[2]), parseInt(nextstr[1]) - 1, parseInt(nextstr[0]));
+                if (i == 0) {
+                    currDate = new Date(parseInt(currstr[2]), parseInt(currstr[1]) - 1, parseInt(currstr[0]));
+                }
+
+                for (let i = 0; i < keys.length; i++) {
+                    let currA = table[keys[i]];
+                    if (currA[2] > 0) {
+                        let custr = keys[i].split('-');
+                        custr = custr[0].split(',');
+                        let minusDate = new Date(parseInt(custr[2]), parseInt(custr[0]) - 1, parseInt(custr[1]));
+                        let mdiff = findDaysLag(minusDate, datepenyastart);
+                        //console.log(minusDate);
+                        //console.log(currDate);
+                        //console.log(g);
+                        //console.log('////////////////');
+
+                        if (minusDate <= currDate &&  g < i && mdiff <= diff) {
+                            if(preDate.getDate() ==  minusDate.getDate() && preDate.getMonth() ==  minusDate.getMonth() && preDate.getFullYear() ==  minusDate.getFullYear()){
+                                break;
+                            }
+                            preDate = minusDate;
+                            summ -= parseInt(currA[2]);
+                            fixedSumm += parseInt(currA[2]);
+                        }
+                    }
+                }
+                let difference = findDaysLag(nextDate, currDate);
+                penyaperiod = (summ * (penyaobj[penyakeys[i]] * 2 / 100) / 365 * difference).toFixed(2);
+                if (radio1) {
+                    penyaperiod = (summ * (penyaobj[penyakeys[i]] * 1 / 100) / 365 * difference).toFixed(2);
+                }
+                // currstr[0] = parsezero(currstr[0], '5').day;
+                // nextstr[0] = parsezero(nextstr[0], '5').day;
+
+                tpenya+= parseFloat(penyaperiod);
+                //console.log('i: ' + i + ' g: ' + g + ' penyalen: '+penyakeys.length + ' keyslen: '+keys.length)
+                if (i == 0) {
+                    penya2text += "<table>" +
+                        "<tr>\n" +
+                        "    <th>" + (currstr[0]) + "." + (currstr[1]) + "." + currstr[2] + " </th>\n" +
+                        "    <th>" + nextstr[0] + "." + (nextstr[1]) + "." + nextstr[2] + " </th>\n" +
+                        "    <th>" + difference + "</th>\n" +
+                        "    <th>" + summ + "</th>\n" +
+                        "    <th>" + penyaobj[penyakeys[i]] + "</th>\n" +
+                        "    <th>" + penyaobj[penyakeys[i]] * 2 + "</th>\n" +
+                        "    <th>" + penyaperiod + "</th>\n" +
+                        "   </tr>";
+                } else {
+                    penya2text += "<table>" +
+                        "<tr>\n" +
+                        "    <th>" + (parseInt(currstr[0]) + 1) + "." + (currstr[1]) + "." + currstr[2] + " </th>\n" +
+                        "    <th>" + nextstr[0] + "." + (nextstr[1]) + "." + nextstr[2] + " </th>\n" +
+                        "    <th>" + difference + "</th>\n" +
+                        "    <th>" + summ + "</th>\n" +
+                        "    <th>" + penyaobj[penyakeys[i]] + "</th>\n" +
+                        "    <th>" + penyaobj[penyakeys[i]] * 2 + "</th>\n" +
+                        "    <th>" + penyaperiod + "</th>\n" +
+                        "   </tr>";
+                }
+                if( i == keys.length){
+                    penya2text += "<table>" +
+                        "<tr>\n" +
+                        "    <th>Всього </th>\n" +
+                        "    <th> </th>\n" +
+                        "    <th></th>\n" +
+                        "    <th></th>\n" +
+                        "    <th></th>\n" +
+                        "    <th></th>\n" +
+                        "    <th>" + tpenya.toFixed(2) + "</th>\n" +
+                        "   </tr>";
+                }
+            }
+        }
+
+        // let cc = 0;
+        // let needstr = '';
+        // let nextstr = '';
+        // let penyato = 0;
+        // let dateo = new Date();
+        // let daten = new Date();
+        // let flag1 = false;
+        // let needvar = ns + 1;
+        // let last = '2050,10,10';
+        // let lastD = new Date(last);
+        // let totals2 = keys[g].split('-');
+        // totals2 = totals2[0].split(',');
+        // let year = parseInt(totals2[2]);
+        // let totalD = new Date(parseInt(totals2[2]), parseInt(totals2[1]) + stop, parseInt(totals2[0]));
+        // if (parseInt(totals2[0]) > 1) {
+        //     totalD = '';
+        //     totalD = new Date(year, parseInt(totals2[1]) + stop + 1, parseInt(totals2[0]));
+        // }
+        // for (let i = 0; i < keys2.length; i++) {
         //
         //     if (i == 0 && cc == 0) {
         //         penya2text += "<table>" +
@@ -290,6 +467,9 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //     }
         //     penyato = 0;
         //     let currArray = table[keys[g]];
+        //     if (!currArray[1]) {
+        //         break;
+        //     }
         //     let n = parseInt(ns) + parseInt(i);
         //     let currstr = keys2[n];
         //     let currBet = table2[keys2[i]];
@@ -299,7 +479,6 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //     }
         //
         //     if (g == 1) {
-        //         ////console.log('value: ' + keys2[n] + ' n: ' + n + ' i: ' + i);
         //     }
         //     let nBet = table2[keys2[i + 1]];
         //     if (flag1) {
@@ -320,7 +499,6 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //     if (flag1) {
         //         currstr = needstr;
         //         if (g == 1) {
-        //             ////console.log('here: ' + currstr + ' i: ' + i + ' g: ' + g);
         //         }
         //     }
         //     if (nBet == '~') {
@@ -348,13 +526,11 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //         let c2 = currstr.split('-');
         //         currstr = c2[0].split(',');
         //
-        //         //////////console.log('cstr: ' + parseInt(currstr[2]), parseInt(currstr[1]), parseInt(currstr[0]) + 1)
         //
         //     }
         //     dateo = new Date(parseInt(currstr[2]), parseInt(currstr[1]), parseInt(currstr[0]) + 1);
         //     nstr2 = nstr2.split('.');
         //     if (g == 1) {
-        //         ////console.log('curr: ' + currstr + ' next: ' + nstr2);
         //     }
         //     daten = new Date(nstr2[2], nstr2[1], nstr2[0]);
         //     if (dateo > daten) {
@@ -362,13 +538,11 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //
         //         for (let j = 0; j < keys2.length; j++) {
         //             let knob = keys2[j].split('.');
-        //             //////////console.log('knob: ' + knob);
         //             let ndaten = new Date(knob[2], knob[1], knob[0]);
         //             if (dateo < ndaten) {
         //                 needstr = knob;
         //                 needvar = j;
         //                 nextstr = keys2[j + 1].split('.');
-        //                 // ////console.log('var: ' + needvar + ' str: ' + needstr + ' value: ' + table2[keys2[j]]);
         //                 break;
         //             }
         //         }
@@ -387,50 +561,40 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //         date5 = new Date(nstr2[2], nstr2[1], nstr2[0]);
         //     }
         //     if (g == 1) {
-        //         //console.log(date5);
-        //         //console.log(totalD);
-        //         //console.log(date5 > totalD)
-        //         //console.log('zzzzzzzzzzzzzzzzzzzzzzzzzzz');
+        //         /
+        //         /
+        //         /
+        //         /
         //     }
         //     if (date5 > totalD) {
-        //         //console.log('i\'m here');
-        //         nstr2 = (totals2[0]+29)+ '.'+ (parseInt(totals2[1]) + stop)+ '.'+ parseInt(totals2[2]);
+        //         nstr2 = (totals2[0] + 29) + '.' + (parseInt(totals2[1]) + stop) + '.' + parseInt(totals2[2]);
         //         nstr2 = nstr2.split('.')
-        //         //console.log('nstr2: '+ nstr2)
-        //         date5 = new Date(parseInt(totals2[2]), (parseInt(totals2[1]) + stop), parseInt(totals2[0])+29);
-        //         if(parseInt(totals2[0])>1){
-        //             nstr2 = (parseInt(totals2[0])+29)+ '.'+ (parseInt(totals2[1]) + stop)+ '.'+ totals2[2]
-        //             date5 = new Date(parseInt(totals2[2]), (parseInt(totals2[1]) + stop+1), parseInt(totals2[0]));
+        //         date5 = new Date(parseInt(totals2[2]), (parseInt(totals2[1]) + stop), parseInt(totals2[0]));
+        //         if (parseInt(totals2[0]) > 1) {
+        //             nstr2 = (parseInt(totals2[0])) + '.' + (parseInt(totals2[1]) + stop) + '.' + totals2[2]
+        //             date5 = new Date(parseInt(totals2[2]), (parseInt(totals2[1]) + stop + 1), parseInt(totals2[0]));
         //         }
-        //         // //console.log('here: '+date5);
         //         i = keys2.length - 1;
         //     }
         //     let nnBet = table2[keys2[needvar + 2]];
-        //     // console.log(nnBet);
-        //     console.log(date5);
-        //     console.log(totalD);
-        //     console.log(date5 < totalD);
-        //     console.log( ' bet: '+nnBet);
-        //     console.log('igor igor igor igor igor igor igor igor igor igor igor igor igor igor igor igor igor ')
-        //     if(date5 < totalD && nnBet == '~'){
-        //         //console.log('i\'m here');
+        //     //
+        //
+        //
+        //
+        //
+        //     if (date5 < totalD && nnBet == '~') {
         //         let istop = parseInt(totals2[1]) + parseInt(stop);
-        //         let iday = parseInt(totals2[0])+29;
-        //         nstr2 = (iday)+ '.'+ istop + '.'+ (parseInt(totals2[2]));
+        //         let iday = parseInt(totals2[0]) + 29;
+        //         nstr2 = (iday) + '.' + istop + '.' + (parseInt(totals2[2]));
         //         nstr2 = nstr2.split('.');
-        //         console.log('nstr2: '+ nstr2);
-        //         console.log('iday: ' + iday+ ' istop: '+ (istop)+ ' year: '+totals2[2]);
-        //         date5 = new Date(parseInt(totals2[2]), (istop), parseInt(totals2[0])+29);
-        //         if(parseInt(totals2[0])>1){
-        //             nstr2 = iday+ '.'+ (istop)+ '.'+ totals2[2];
-        //             date5 = new Date(iday, (istop+1), parseInt(totals2[0]));
+        //         date5 = new Date(parseInt(totals2[2]), (istop), parseInt(totals2[0]) + 29);
+        //         if (parseInt(totals2[0]) > 1) {
+        //             nstr2 = iday + '.' + (istop) + '.' + totals2[2];
+        //             date5 = new Date(iday, (istop + 1), parseInt(totals2[0]));
         //         }
-        //         // //console.log('here: '+date5);
         //         i = keys2.length - 1;
         //     }
         //     var totalsumm = 0;
-        //     //////////////////////////console.log('penyato: ' + penyato)
-        //     // ////console.log('cur: '+currstr + ' next: ' + nextstr + ' i: '+i)
         //     let cstr = keys2[ns + i];
         //     let nstr = "";
         //     let currc = currBet * 2;
@@ -456,14 +620,9 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         //         break;
         //     }
         //     cc++;
-        //     // ////console.log('-----------------------')
-        //     // ////console.log('nstr: '+ nstr);
-        //     // ////console.log(nstr2[0] + "." + (nstr2[1]) + "." + nstr2[2] );
-        //     // ////console.log('////////////////////////')
         //     if (g == 1) {
-        //         ////console.log(lastD);
-        //         ////console.log(date4);
-        //         ////console.log('``````````````````````````');
+        //         ///
+        //         ///
         //     }
         //     if (lastD == date4) {
         //
@@ -519,10 +678,7 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         let sum2 = parseInt(currArray2[1]);
         let msum2 = parseInt(currArray2[2]);
         sum2 += parseInt(tsum);
-        //////////////////////////console.log('sum: ' + sum2 + ' msum: ' + msum2);
         sum2 -= msum2;
-        //////////////////////////console.log('sum2: ' + sum2 + ' msum2: ' + msum2);
-        //////////////////////////console.log('///////////////////////////');
         // totalsum = 0;
         let currstr = keys[i];
         currstr = currstr.split('-');
@@ -534,8 +690,7 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
             nextstr = nextstr.split('-')
             date2 = new Date(nextstr[0]);
         } else {
-            nextstr = date3.getDay() - 1 + '.' + (date3.getMonth() + 1) + '.' + date3.getFullYear();
-            //////////////////////////////console.log('nextstrdsfsdf: ' + nextstr)
+            nextstr = date3.getDate() - 1 + '.' + (date3.getMonth() + 1) + '.' + date3.getFullYear();
         }
         let currstr2 = currstr[0];
         currstr2 = currstr2.split(',');
@@ -547,7 +702,6 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
             nextstr2 = nextstr2.split(',');
         }
 
-        //////////////////////////////console.log(currstr2 + ' next ' + nextstr2)
         let cmonth = currstr2[1];
         let cyear = currstr2[2];
         let cday = currstr2[0];
@@ -557,8 +711,6 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         let currArray = table[keys[i]];
         let cDate = new Date(keys[i]);
         let str = cday + '.' + cmonth + '.' + cyear;
-        ////////////////////////////////////////////console.log('sum: ' + isNaN(sum));
-        ////////////////////////////////////////////console.log('threeper: ' + isNaN(threeper[i]))
         let answer = threeper[i];
         totalper += answer;
         let differenceDays = findDaysLag(date2, date1);
@@ -600,17 +752,17 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
     doc.autoTable({html: '#my-table4', styles: {cellPadding: 0.5, font: "NotoSansCJKjp-Regular"},});
     doc.text('iнфляцiя: ' + totalI.toFixed(2), 15, countert - 10);
     doc.text('вiдсотки рiчних: ' + totalper.toFixed(2), 15, countert - 10 + 10);
-    doc.text('пеня: ' + tvasya.toFixed(2), 15, countert - 10 + 20);
-    ////////////////////////////////////////console.log(countert);
+    // doc.text('пеня: ' + tvasya.toFixed(2), 15, countert - 10 + 20);
+    ///////////////////////////////////////
     let ckey = keys[0];
     ckey = ckey.split('-');
     let date = new Date(ckey[0])
-    //////////////////////console.log(ckey[0])
-    //////////////////////console.log(date3);
-    //////////////////////console.log(date);
-    //////////////////////console.log(term);
+    /////////////////////
+    /////////////////////
+    /////////////////////
+    /////////////////////
     total = 0;
-    total += totalper + tvasya + totalI + totalS;
+    total += totalper + totalI + totalS;
     doc.setFont('NotoSansCJKjp-Regular');
     doc.text(70, 10, 'итого: ' + total.toFixed(2));
     if (deadlineCheck(date3, term, date)) {
@@ -621,12 +773,12 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
 }
 
 function penyaDeadLinecalc(date1, deadline) {
-    let penyadeadline = date1.getMonth() + stop + '.' + date1.getDay() + date1.getFullYear() + deadline;
+    let penyadeadline = date1.getMonth() + stop + '.' + date1.getDate() + date1.getFullYear() + deadline;
     return penyadeadline;
 }
 
 function deadlineCheck(date2, term, date1) {
-    let termDate = new Date(date2.getFullYear() - term, date2.getMonth(), date2.getDay() - 1);
+    let termDate = new Date(date2.getFullYear() - term, date2.getMonth(), date2.getDate() - 1);
     let ansFineSumm = 0;
     // if (date2 > penyadeadline) {
     //     ansFineSumm = 0;
@@ -653,7 +805,7 @@ function findInflTerm(date1, date2, inflTerm) {
     let inflTermD = date1;
     let inflTermDn = date1;
     if (inflTerm != 0) {
-        inflTermDn = new Date(date2.getFullYear() - inflTerm, date2.getMonth(), date2.getDay() - 1);
+        inflTermDn = new Date(date2.getFullYear() - inflTerm, date2.getMonth(), date2.getDate() - 1);
     }
     if (inflTermD > inflTermDn) {
         inflTermDn = inflTermD;
@@ -678,7 +830,7 @@ function drawInflation(date1, difference) {
     date1 = new Date(date1);
     let futureYear = date1.getFullYear();
     let futureMonth = date1.getMonth() + 1;
-    //////////////////////////console.log(futureMonth);
+    /////////////////////////
     for (let i = 0; i <= difference; i++) {
         if (futureMonth == 13) {
             futureYear++;
@@ -689,8 +841,7 @@ function drawInflation(date1, difference) {
         if (futureMonth >= 10) {
             str = (futureMonth + '-' + futureYear);
         }
-        ////////////////////////////////////////////console.log('str: ' + str);
-        ////////////////////////////////////////////console.log()
+        ///////////////////////////////////////////
         try {
 
             indexesDraw += ((ShowIndexInflation(str).index) + '% ');
@@ -703,9 +854,8 @@ function drawInflation(date1, difference) {
             if (futureMonth >= 10) {
                 str2 = ((futureMonth - c3 + '-' + futureYear));
             }
-            //////////////////////////console.log('futureMonth: ' + futureMonth + ' c3: ' + c3);
             if (futureMonth == c3 || futureMonth < c3) {
-                //////////////////////////console.log('here')
+                /////////////////////////
                 futureMonth += c3;
                 futureYear -= 1;
                 str2 = (('0' + (futureMonth - c3) + '-' + futureYear));
@@ -714,7 +864,6 @@ function drawInflation(date1, difference) {
                     str2 = ((futureMonth - c3 + '-' + futureYear));
                 }
             }
-            //////////////////////////console.log('hi: ' + str2);
             indexesDraw += ((ShowIndexInflation(str2).index) + '% ');
             indexesDrawa.push((ShowIndexInflation(str2).index));
             c3++;
@@ -757,9 +906,10 @@ function drawInflation(date1, difference) {
 //     // alert(`Размер изображения: большой`);
 // }
 function findDaysLag(date2, date1) {
-    let daysLag = Math.ceil(Math.abs(date2.getTime() - date1.getTime()) / (1000 * 3600 * 24));
-    ////////////////////////console.log(daysLag)
-    return daysLag;
+    const diffTime = Math.abs(date2 - date1);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))+1;
+
+    return diffDays;
 }
 
 function findDaysForCalculate(daysLag, stop) {
@@ -782,7 +932,6 @@ function findThreePer(colKt, percent, date2, inflTermD) {
     threepersum = colKt * (parseInt(percent) / 100) / 365 * (smth + 1);
 
     threeper.push(threepersum);
-    ////////////////////console.log('colKt: ' + colKt + ' per: ' + percent + 'date: ' + ((date2 - inflTermD) / 60 / 60 / 24 / 1000));
     return threepersum;
 }
 
@@ -793,8 +942,8 @@ var ccc = 0;
 function findPenalty(daysForCalc, futureYear, futureMonth, futureDay) {
     let summPenya = 0.0;
     let penyatext = [];
-    //////////////console.log(futureDay+'.'+futureMonth+'.'+futureYear + '\n' + '/////////////////////////////');
-
+    let allPenyas2 = [];
+    let allPenyast2 = [];
     for (let i = daysForCalc; i >= 0; i--) {
         let penyadate = new Date(futureYear, futureMonth, futureDay);
         if (i % 365 == 0) {
@@ -810,25 +959,18 @@ function findPenalty(daysForCalc, futureYear, futureMonth, futureDay) {
         if (document.getElementById('penya-count').value == 0) {
             summPenya += ShowPenyPercent(penyadate).percent;
             penyatext[i] = (ShowPenyPercent(penyadate).percent);
-            allPenyas.push(ShowPenyPercent(penyadate).percent);
-            allPenyast.push(ShowPenyPercent(penyadate).data);
+            allPenyas2.push(ShowPenyPercent(penyadate).percent);
+            allPenyast2.push(ShowPenyPercent(penyadate).data);
         } else {
             summPenya += parseFloat(document.getElementById('penya-count').value);
         }
 
         futureDay++;
-        if (i - 1 < 0) {
-            //////////////console.log('i: '+ i + ' i-1: '+ (i-1) + ' text: ' + allPenyast[i + allPenyast.length-1]);
-            allPenyas.push('~');
-            allPenyast.push('-' + ccc);
-            //////////////console.log('i: '+ i + ' i-1: '+ (i-1) + ' text: ' + allPenyast[i + allPenyast.length-1]);
-        }
-
     }
     ccc++;
     return {
-        date: penyatext,
-        percent: summPenya
+        date: allPenyast2,
+        percent: allPenyas2
     };
 }
 
@@ -864,11 +1006,9 @@ function inflArrayt(difference, futureMonth, futureYear) {
         } catch (e) {
 
             let str2 = (('0' + (futureMonth - 2 - c2) + '-' + futureYear));
-            ////////////////////////////console.log('0' + (futureMonth-2-c2) + '-' + futureYear);
             if (futureMonth >= 10) {
                 str2 = ((futureMonth - 1 - c2 + '-' + futureYear));
             }
-            ////////////////////////////console.log('hi: ' + str2);
             infltext.push((ShowIndexInflation(str2).index));
             allIndexest.push((ShowIndexInflation(str2).month));
             c2++;
@@ -894,8 +1034,7 @@ function inflArrayv(difference, futureMonth, futureYear) {
         if (futureMonth >= 10) {
             str = (futureMonth + '-' + futureYear);
         }
-        ////////////////////////////////////////////console.log('str: ' + str);
-        ////////////////////////////////////////////console.log()
+        ///////////////////////////////////////////
         // if(ShowIndexInflation(str) == undefined){
         //
         // }
@@ -907,11 +1046,9 @@ function inflArrayv(difference, futureMonth, futureYear) {
         } catch (e) {
 
             let str2 = (('0' + (futureMonth - 1 - c) + '-' + futureYear));
-            ////////////////////////////console.log('0' + (futureMonth-1-c) + '-' + futureYear);
             if (futureMonth >= 10) {
                 str2 = ((futureMonth - 1 - c + '-' + futureYear));
             }
-            ////////////////////////////console.log('hi: ' + str2);
             indexes.push((ShowIndexInflation(str2).index));
             allIndexes.push((ShowIndexInflation(str2).index));
             c++;
@@ -941,7 +1078,6 @@ function addInput() {
         "                           data-toggle=\"tooltip\" data-placement=\"top\" data-html=\"true\" title=\"\"\n" +
         "                           data-original-title=\"Сума зменшення зобов'язання\"> <br>";
     document.getElementById('row').appendChild(newdiv);
-    //////////////////////////////////////////////////console.log(document.querySelectorAll("[id^=col-date]"));
     currDate++;
 }
 
@@ -971,7 +1107,7 @@ function parsingAllLines() {
 
         let str = document.getElementById('col-date' + String(i)).value + '-' + rcounter;
         str = str.split('.');
-        ////////////////////////////////console.log(str);
+        ///////////////////////////////
         let temp = str[0];
         str[0] = str[1];
         str[1] = temp;
@@ -1004,15 +1140,13 @@ function calculate() {
     let docs = [];
     let threePer = 0.0;
     let inflTermD = 0;
-    let radio1 = document.getElementById("n1");
-    let radio2 = document.getElementById("n2");
+    let radio1 = document.getElementById("n1").checked;
+    let radio2 = document.getElementById("n2").checked;
     // let radio3 = document.getElementById("n3");
-    ////////////////////////////////////////console.log('1: ' + radio1.checked + ' 2: ' + radio2.checked);
     parsingAllLines();
     let differenceMonth = 0;
     let totalIndex = 0;
     let stop = deadlineStop / 2 * 61;
-    // console.log('stop: ' + stop);
     let unique = [];
     const keys = Object.keys(table);
 
@@ -1033,14 +1167,12 @@ function calculate() {
         let inflDate = new Date();
         let futureMonth = date1.getMonth() + 1;
         let futureYear = date1.getFullYear();
-        let futureDay = date1.getDay();
+        let futureDay = date1.getDate();
         if (i + 1 < keys.length) {
             let nextstring = keys[i + 1];
             nextstring = nextstring.split('-');
             date2 = new Date(nextstring[0]);
         }
-        ////////////////////////////////////////////console.log('date1: ' + date1);
-        ////////////////////////////////////////////console.log('date2: ' + date2);
         if (i > 0) {
             colKt = 0;
             for (let v = keys.length; v > 0; v--) {
@@ -1049,17 +1181,14 @@ function calculate() {
                 colKt = colKt - parseInt(fcurrarr[2]);
             }
         }
-        ////////////////////////////////////////////console.log('colKt: ' + colKt);
         inflDate = findInflTerm(date1, date2, inflTerm);
-        ////////////////////////////////////////////console.log('infldate: ' + inflDate);
         differenceMonth = findDifferenceM(inflDate, date2); //сли что-то не так findDifferenceM(inflDate, date2);
-        ////////////////////////////////////////////console.log(differenceMonth);
+        ///////////////////////////////////////////
         indexes = inflArrayv(differenceMonth, futureMonth, futureYear);
         infltext = inflArrayt(differenceMonth, futureMonth, futureYear);
         totalIndex = findTotalIndex(indexes);
         daysLag = findDaysLag(date2, date1);
         daysForCalculate = findDaysForCalculate(daysLag, stop);
-        ////////////////console.log('days4calc: '+daysForCalculate);
 
         let table3 = {};
         table3 = findPenalty(daysForCalculate, futureYear, futureMonth, futureDay);
@@ -1078,24 +1207,11 @@ function calculate() {
     let total = 0.0;
     for (let i = 0; i < totals.length; i++) {
         total += parseFloat(totals[i]);
-        ////////////////////////////////////////////console.log('total: ' + total);
     }
     if (deadlineCheck(date3, term, date4)) {
         total = "srok davnosti splinuv";
     }
-
-    for (let i = 0; i < allPenyast.length; i++) {
-        table2[allPenyast[i]] = allPenyas[i];
-        if (i + 1 == allPenyas.length) {
-            table2['`'] = '`';
-        }
-        ////////////console.log('text: '+allPenyast[i] + ' value: '+ allPenyas[i] + ' i: '+i);
-    }
-    //////////////console.log('----------------------------------------');
-    var keys2 = Object.keys(table2);
-    for (let i = 0; i < keys2.length; i++) {
-        ////////////console.log('text: '+ keys2[i] + ' v: '+ table[keys2[i]] + ' i: '+ i);
-    }
+    let keys2 = Object.keys(table2);
     drawPdf(infltext, doc, table, penyatext, date3, percent, currTotal, totalIndex, date3, radio1, radio2, keys2, term, deadlineStop);
 
     counterM++;

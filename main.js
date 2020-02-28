@@ -192,8 +192,7 @@ function drawPdf(infltext, doc, table, penyatext, fin, percent, total, totalInde
         currstr = currstr[0].split('.');
         let date1 = new Date(currstr[0]);
         let date2 = new Date(enddate.getFullYear(), enddate.getMonth(), enddate.getDate());
-        console.log(date2);
-        console.log('////////////')
+
         let nextstr = keys[i + 1];
 
         if (i + 1 < keys.length) {

@@ -11,7 +11,7 @@
     "example": "examples"
   },
   "peerDependencies": {
-    "jspdf": "^1.5.3"
+    "jspdf": "^2.3.1"
   },
   "prettier": {
     "trailingComma": "es5",
@@ -22,7 +22,7 @@
   "devDependencies": {
     "@webpack-cli/migrate": "^0.1.9",
     "dts-bundle-generator": "^3.3.1",
-    "jspdf": "^1.5.3",
+    "jspdf": "^2.3.1",
     "mocha": "^6.2.2",
     "mock-browser": "^0.92.14",
     "mock-require": "^3.0.3",

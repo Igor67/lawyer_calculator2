@@ -23,7 +23,7 @@
     "@webpack-cli/migrate": "^0.1.9",
     "dts-bundle-generator": "^3.3.1",
     "jspdf": "^1.5.3",
-    "mocha": "^6.2.2",
+    "mocha": "^10.2.0",
     "mock-browser": "^0.92.14",
     "mock-require": "^3.0.3",
     "object-assign": "^4.1.1",
